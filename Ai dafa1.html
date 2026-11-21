@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAFA AI</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;background:#091323;color:white;
+ font-family:Arial;height:100vh;
+ display:flex;flex-direction:column
+}
+header{
+ background:#142b49;padding:20px;
+ text-align:center;font-size:24px;
+ font-weight:bold;color:#42c8ff
+}
+#chat{
+ flex:1;overflow-y:auto;padding:15px;
+ display:flex;flex-direction:column;gap:13px
+}
+.msg{
+ max-width:88%;padding:14px;
+ border-radius:14px;line-height:1.6;
+ white-space:pre-wrap;overflow-wrap:anywhere
+}
+.user{align-self:flex-end;background:#087caa}
+.bot{align-self:flex-start;background:#1c2c43}
+#area{
+ display:flex;gap:8px;padding:12px;
+ background:#142b49
+}
+input{
+ flex:1;min-width:0;padding:14px;
+ border:0;border-radius:10px;font-size:16px
+}
+button{
+ border:0;border-radius:10px;
+ padding:12px 18px;
+ background:#08a5dc;color:white;
+ font-weight:bold
+}
+footer{text-align:center;padding:8px;color:#8faac5}
+</style>
+</head>
+
+<body>
+
+<header>💙 DAFA AI</header>
+
+<div id="chat">
+<div class="msg bot">
+Halo! Saya DAFA AI.
+
+Saya siap membantu menjawab pertanyaan kamu!
+
+Saya bisa membantu:
+- Matematika
+- IPA
+- Bahasa Inggris
+- Coding
+- Teknologi
+- Pengetahuan umum
+
+Silakan bertanya!
+</div>
+</div>
+
+<footer>DAFA AI • Smart Assistant</footer>
+
+<div id="area">
+<input id="question" placeholder="Tanyakan sesuatu...">
+<button onclick="send()">Kirim</button>
+</div>
+
+<script>
+
+// =================================
+// MASUKKAN API KEY DI SINI
+// =================================
+
+const API_KEY = "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";
+
+// =================================
+
+let previousId = null;
+let busy = false;
+
+const chat = document.getElementById("chat");
+const question = document.getElementById("question");
+
+function addMessage(text,type){
+ const div = document.createElement("div");
+ div.className = "msg " + type;
+ div.textContent = text;
+ chat.appendChild(div);
+ chat.scrollTop = chat.scrollHeight;
+ return div;
+}
+
+async function send(){
+
+ const q = question.value.trim();
+
+ if(!q || busy) return;
+
+ if(API_KEY === "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"){
+  alert("Masukkan API Key di dalam kode HTML terlebih dahulu!");
+  return;
+ }
+
+ addMessage(q,"user");
+ question.value = "";
+
+ const loading = addMessage("DAFA AI sedang berpikir...","bot");
+
+ busy = true;
+
+ try{
+
+  const body = {
+   model: "gpt-5.5",
+   instructions:
+   "Kamu adalah DAFA AI, asisten kecerdasan buatan yang pintar, ramah, informatif dan membantu. Jawab berbagai pertanyaan dengan jelas dan akurat. Gunakan bahasa Indonesia jika pengguna menggunakan bahasa Indonesia. Bantu matematika, IPA, bahasa, coding, teknologi dan pengetahuan umum. Jelaskan langkah demi langkah jika diperlukan. Jangan mengarang jika tidak tahu.",
+   input: q
+  };
+
+  if(previousId){
+   body.previous_response_id = previousId;
+  }
+
+  const response = await fetch(
+   "https://api.openai.com/v1/responses",
+   {
+    method:"POST",
+    headers:{
+     "Content-Type":"application/json",
+     "Authorization":"Bearer " + API_KEY
+    },
+    body:JSON.stringify(body)
+   }
+  );
+
+  const data = await response.json();
+
+  if(!response.ok){
+   throw new Error(
+    data.error?.message || "API mengalami masalah"
+   );
+  }
+
+  previousId = data.id;
+
+  const answer = (data.output || [])
+   .filter(item => item.type === "message")
+   .flatMap(item => item.content || [])
+   .filter(item => item.type === "output_text")
+   .map(item => item.text)
+   .join("\n");
+
+  loading.textContent =
+   answer || "AI tidak memberikan jawaban.";
+
+ }catch(error){
+
+  loading.textContent =
+   "Maaf, terjadi kesalahan:\n" + error.message;
+
+ }
+
+ busy = false;
+ chat.scrollTop = chat.scrollHeight;
+}
+
+question.addEventListener("keydown",function(e){
+ if(e.key === "Enter") send();
+});
+
+</script>
+</body>
+</html>
